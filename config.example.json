@@ -1,0 +1,25 @@
+{
+  "bots": [
+    {
+      "id": "b1",
+      "alias": "bot1",
+      "display": "Vault Bot 1",
+      "token": "${BOT1_TOKEN}"
+    }
+  ],
+  "channels": [
+    {
+      "id": "${DRIVE_CHANNEL_ID}",
+      "alias": "drive1",
+      "display": "Vault Channel 1"
+    }
+  ],
+  "chunkSizeBytes": 16777216,
+  "concurrency": 4,
+  "rate": {
+    "perBotChatPerMinute": 18,
+    "globalPerSecond": 25
+  },
+  "dbPath": "./data/drive.db",
+  "workDir": "./.chunks"
+}

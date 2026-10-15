@@ -33,6 +33,32 @@ npm install
 node src/cli.js init
 ```
 
+You can store secrets in `.env` and reference them from `config.json`:
+
+```json
+{
+  "bots": [
+    {
+      "id": "b1",
+      "alias": "bot1",
+      "display": "Vault Bot 1",
+      "token": "${BOT1_TOKEN}"
+    }
+  ],
+  "channels": [
+    {
+      "id": "${DRIVE_CHANNEL_ID}",
+      "alias": "drive1",
+      "display": "Vault Channel 1"
+    }
+  ]
+}
+```
+
+Example files are provided:
+- `config.example.json`
+- `.env.example`
+
 Edit `config.json`:
 
 ```json

@@ -1,7 +1,9 @@
 config.json
+!config.example.json
 data/
 .chunks/
 .env
+!.env.example
 backups/
 node_modules/
 *.bak

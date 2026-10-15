@@ -3,14 +3,46 @@ const path = require('node:path');
 
 const DEFAULT_PATH = path.join(process.cwd(), 'config.json');
 
-function loadConfig(configPath = process.env.CONFIG_PATH || DEFAULT_PATH) {
-  if (!fs.existsSync(configPath)) {
-    throw new Error(`Config not found: ${configPath}. Run "node src/cli.js init" first.`);
+function loadEnv(baseDir) {
+  const envPath = path.join(baseDir, '.env');
+  if (!fs.existsSync(envPath)) return;
+  const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (key && process.env[key] === undefined) process.env[key] = value;
   }
-  const raw = fs.readFileSync(configPath, 'utf8');
-  const cfg = JSON.parse(raw);
-  cfg.configPath = configPath;
-  cfg.baseDir = path.dirname(path.resolve(configPath));
+}
+
+function resolveEnvVars(value) {
+  if (typeof value === 'string') {
+    return value.replace(/\$\{([^}]+)\}/g, (_, key) => process.env[key] || '');
+  }
+  if (Array.isArray(value)) return value.map(resolveEnvVars);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveEnvVars(v)]));
+  }
+  return value;
+}
+
+function loadConfig(configPath = process.env.CONFIG_PATH || DEFAULT_PATH) {
+  const resolvedPath = path.resolve(configPath);
+  const baseDir = path.dirname(resolvedPath);
+  loadEnv(baseDir);
+  if (!fs.existsSync(resolvedPath)) {
+    throw new Error(`Config not found: ${resolvedPath}. Run "node src/cli.js init" first.`);
+  }
+  const raw = fs.readFileSync(resolvedPath, 'utf8');
+  const cfg = resolveEnvVars(JSON.parse(raw));
+  cfg.configPath = resolvedPath;
+  cfg.baseDir = baseDir;
   cfg.chunkSizeBytes = cfg.chunkSizeBytes || (cfg.chunkSizeMB ? cfg.chunkSizeMB * 1024 * 1024 : 16 * 1024 * 1024);
   cfg.concurrency = cfg.concurrency || 4;
   cfg.rate = cfg.rate || {};
@@ -41,6 +73,31 @@ function writeTemplate(configPath = DEFAULT_PATH) {
   };
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(template, null, 2));
+
+  const envExample = path.join(path.dirname(configPath), '.env.example');
+  fs.writeFileSync(envExample, [
+    '# Telegram drive secrets',
+    'BOT1_TOKEN=123456:ABC-REPLACE',
+    'DRIVE_CHANNEL_ID=-100REPLACE',
+    'DRIVE_KEY=replace-with-a-long-base64-key',
+    ''
+  ].join('\\n'));
+
+  const configExample = path.join(path.dirname(configPath), 'config.example.json');
+  const envTemplate = {
+    bots: [
+      { id: 'b1', alias: 'bot1', display: 'Vault Bot 1', token: '${BOT1_TOKEN}' }
+    ],
+    channels: [
+      { id: '${DRIVE_CHANNEL_ID}', alias: 'drive1', display: 'Vault Channel 1' }
+    ],
+    chunkSizeBytes: 16 * 1024 * 1024,
+    concurrency: 4,
+    rate: { perBotChatPerMinute: 18, globalPerSecond: 25 },
+    dbPath: './data/drive.db',
+    workDir: './.chunks'
+  };
+  fs.writeFileSync(configExample, JSON.stringify(envTemplate, null, 2));
   return configPath;
 }
 
