@@ -201,5 +201,6 @@ function createDrive(config, driveKey, options) {
 module.exports = {
   TelegramDrive,
   createDrive,
-  createTelegramDrive: createDrive
+  createTelegramDrive: createDrive,
+  loadConfig: configMod.loadConfig
 };
