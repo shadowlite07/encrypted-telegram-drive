@@ -39,11 +39,64 @@ await drive.close();
 ```
 
 If you are developing locally in this repository, run `npm link` first, or require:
-
 ```js
 const { createDrive } = require('./src/index.js');
 ```
 
+### Programmatic API
+
+Drive setup:
+```js
+const { createDrive } = require('encrypted-telegram-drive');
+
+const drive = createDrive(config, process.env.DRIVE_KEY, { quiet: true });
+```
+
+Folders:
+```js
+await drive.folders.create('Work');
+await drive.folders.create('Invoices', { parent: folderId });
+await drive.folders.list();
+await drive.folders.list(parentId);
+await drive.folders.get(folderId);
+await drive.folders.rename(folderId, 'New Name');
+await drive.folders.delete(folderId);
+```
+
+Files:
+```js
+await drive.files.upload('./file.bin', {
+  folderId,
+  fresh: false,
+  cleanupOnFail: false,
+  onProgress: (progress) => console.log(progress)
+});
+await drive.files.list({ folderId, all: false, recursive: false });
+await drive.files.get(fileId);
+await drive.files.move(fileId, folderId);
+await drive.files.move(fileId, 'root');
+await drive.files.verify(fileId);
+await drive.files.download(fileId);
+await drive.files.download(fileId, './restored.bin');
+await drive.files.delete(fileId);
+```
+
+Maintenance and portability:
+```js
+await drive.cleanupFailed();
+await drive.backup('./backups/drive.db.copy');
+await drive.exportBundle('./drive-bundle.enc');
+await drive.importBundle('./drive-bundle.enc');
+await drive.portable('./telestore-portable');
+const health = await drive.doctor();
+drive.close();
+```
+
+### Config and secrets
+- `config.json` uses `${ENV_VAR}` placeholders and is safe to commit.
+- `.env` is private and must not be committed.
+- `.env.example` documents the required variables.
+- Do not put real bot tokens or channel IDs directly in `config.json` if you plan to push it.
 ## Requirements
 - Node.js 24 or newer
 - Telegram bot(s) created via `@BotFather`
