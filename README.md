@@ -15,16 +15,37 @@ Files are split into chunks, each chunk is encrypted with AES-256-GCM before upl
 - Database backup and encrypted metadata export/import
 - `doctor` command for config validation
 
-## Use as an npm package
+## Choose a usage mode
 
-This repository also works as a Node package, so you do not need to clone it only to use the API.
+You can use this project in three ways. Pick the one that fits your workflow.
 
-Install from GitHub:
+### Option 1: CLI from the cloned repository
+Use this if you want the included command-line tool and source access.
+
+```powershell
+git clone https://github.com/shadowlite07/encrypted-telegram-drive.git
+cd encrypted-telegram-drive
+npm install
+node src/cli.js doctor
+node src/cli.js status
+```
+
+### Option 2: Install globally from GitHub as a CLI
+Use this if you want the `telegram-drive` command without manually keeping the source folder.
+
+```powershell
+npm install -g github:shadowlite07/encrypted-telegram-drive
+telegram-drive doctor
+telegram-drive status
+```
+
+### Option 3: Use as an npm package / library
+Use this if you want to call the API from your own JavaScript or Node.js project.
+
 ```powershell
 npm install github:shadowlite07/encrypted-telegram-drive
 ```
 
-Then use it programmatically:
 ```js
 const { createDrive } = require('encrypted-telegram-drive');
 
@@ -39,11 +60,12 @@ await drive.close();
 ```
 
 If you are developing locally in this repository, run `npm link` first, or require:
+
 ```js
 const { createDrive } = require('./src/index.js');
 ```
 
-### Programmatic API
+## Programmatic API
 
 Drive setup:
 ```js
@@ -160,7 +182,7 @@ $env:DRIVE_KEY = [Convert]::ToBase64String($bytes)
 $env:DRIVE_KEY
 ```
 
-## Commands
+## CLI Commands
 
 ### doctor
 Validate `DRIVE_KEY`, config, bot tokens, channel access, admin status, and the local database.
