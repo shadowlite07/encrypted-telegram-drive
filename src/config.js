@@ -60,10 +60,14 @@ function loadConfig(configPath = process.env.CONFIG_PATH || DEFAULT_PATH) {
 function writeTemplate(configPath = DEFAULT_PATH) {
   const template = {
     bots: [
-      { id: 'b1', alias: 'bot1', display: 'Vault Bot 1', token: '123456:ABC-REPLACE' }
+      { id: 'b1', alias: 'bot1', display: 'Vault Bot 1', token: '${BOT1_TOKEN}' },
+      { id: 'b2', alias: 'bot2', display: 'Vault Bot 2', token: '${BOT2_TOKEN}' },
+      { id: 'b3', alias: 'bot3', display: 'Vault Bot 3', token: '${BOT3_TOKEN}' }
     ],
     channels: [
-      { id: '-100REPLACE', alias: 'drive1', display: 'Vault Channel 1' }
+      { id: '${DRIVE_CHANNEL_1_ID}', alias: 'drive1', display: 'Vault Channel 1' },
+      { id: '${DRIVE_CHANNEL_2_ID}', alias: 'drive2', display: 'Vault Channel 2' },
+      { id: '${DRIVE_CHANNEL_3_ID}', alias: 'drive3', display: 'Vault Channel 3' }
     ],
     chunkSizeBytes: 16 * 1024 * 1024,
     concurrency: 4,
