@@ -15,6 +15,35 @@ Files are split into chunks, each chunk is encrypted with AES-256-GCM before upl
 - Database backup and encrypted metadata export/import
 - `doctor` command for config validation
 
+## Use as an npm package
+
+This repository also works as a Node package, so you do not need to clone it only to use the API.
+
+Install from GitHub:
+```powershell
+npm install github:shadowlite07/encrypted-telegram-drive
+```
+
+Then use it programmatically:
+```js
+const { createDrive } = require('encrypted-telegram-drive');
+
+const drive = createDrive(config, process.env.DRIVE_KEY, { quiet: true });
+
+const folder = await drive.folders.create('Work');
+const file = await drive.files.upload('./file.bin', { folderId: folder.id });
+
+await drive.files.verify(file.fileId);
+await drive.files.download(file.fileId);
+await drive.close();
+```
+
+If you are developing locally in this repository, run `npm link` first, or require:
+
+```js
+const { createDrive } = require('./src/index.js');
+```
+
 ## Requirements
 - Node.js 24 or newer
 - Telegram bot(s) created via `@BotFather`
