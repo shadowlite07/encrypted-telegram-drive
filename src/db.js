@@ -66,12 +66,12 @@ function setMeta(db, key, value) {
 
 function upsertFile(db, file) {
   const stmt = db.prepare(`
-    INSERT INTO files (id,source_path,name,size,mime,sha256,chunk_size,num_chunks,compression,salt,kdf,iterations,created_at,status,manifest_channel_id,manifest_message_id,manifest_telegram_file_id)
-    VALUES (@id,@source_path,@name,@size,@mime,@sha256,@chunk_size,@num_chunks,@compression,@salt,@kdf,@iterations,@created_at,@status,@manifest_channel_id,@manifest_message_id,@manifest_telegram_file_id)
+    INSERT INTO files (id,source_path,name,size,mime,sha256,chunk_size,num_chunks,compression,salt,kdf,iterations,created_at,status,folder_id,manifest_channel_id,manifest_message_id,manifest_telegram_file_id)
+    VALUES (@id,@source_path,@name,@size,@mime,@sha256,@chunk_size,@num_chunks,@compression,@salt,@kdf,@iterations,@created_at,@status,@folder_id,@manifest_channel_id,@manifest_message_id,@manifest_telegram_file_id)
     ON CONFLICT(id) DO UPDATE SET
       source_path=excluded.source_path,name=excluded.name,size=excluded.size,mime=excluded.mime,sha256=excluded.sha256,
       chunk_size=excluded.chunk_size,num_chunks=excluded.num_chunks,compression=excluded.compression,salt=excluded.salt,kdf=excluded.kdf,
-      iterations=excluded.iterations,status=excluded.status,manifest_channel_id=excluded.manifest_channel_id,manifest_message_id=excluded.manifest_message_id,manifest_telegram_file_id=excluded.manifest_telegram_file_id
+      iterations=excluded.iterations,status=excluded.status,folder_id=excluded.folder_id,manifest_channel_id=excluded.manifest_channel_id,manifest_message_id=excluded.manifest_message_id,manifest_telegram_file_id=excluded.manifest_telegram_file_id
   `);
   stmt.run(file);
 }
