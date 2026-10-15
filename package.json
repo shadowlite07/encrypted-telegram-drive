@@ -15,7 +15,8 @@
   "scripts": {
     "init": "node src/cli.js init",
     "status": "node src/cli.js status",
-    "check": "node --check src/cli.js && node --check src/index.js && node --check src/storage.js"
+    "check": "node --check src/cli.js && node --check src/index.js && node --check src/storage.js",
+    "smoke-test": "node examples/smoke-test.js"
   },
   "files": [
     "src",
