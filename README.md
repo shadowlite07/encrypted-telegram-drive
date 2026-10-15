@@ -110,67 +110,42 @@ drive.close();
 npm install
 ```
 
-### 2. Create config
+### 2. Initialize private files
 ```powershell
 node src/cli.js init
 ```
 
-You can store secrets in `.env` and reference them from `config.json`:
+This creates:
+- `config.json` with `${ENV_VAR}` placeholders
+- `.env` from `.env.example`
+
+### 3. Fill `.env` only
+Edit `.env`:
+
+```env
+BOT1_TOKEN=123456:ABC-REPLACE-1
+BOT2_TOKEN=123456:ABC-REPLACE-2
+BOT3_TOKEN=123456:ABC-REPLACE-3
+DRIVE_CHANNEL_1_ID=-100REPLACE-1
+DRIVE_CHANNEL_2_ID=-100REPLACE-2
+DRIVE_CHANNEL_3_ID=-100REPLACE-3
+DRIVE_KEY=replace-with-a-long-base64-key
+```
+
+Do not put real secrets in `config.json`. It is tracked by Git and already references these environment variables:
 
 ```json
 {
   "bots": [
-    {
-      "id": "b1",
-      "alias": "bot1",
-      "display": "Vault Bot 1",
-      "token": "${BOT1_TOKEN}"
-    }
+    { "id": "b1", "alias": "bot1", "display": "Vault Bot 1", "token": "${BOT1_TOKEN}" }
   ],
   "channels": [
-    {
-      "id": "${DRIVE_CHANNEL_ID}",
-      "alias": "drive1",
-      "display": "Vault Channel 1"
-    }
+    { "id": "${DRIVE_CHANNEL_1_ID}", "alias": "drive1", "display": "Vault Channel 1" }
   ]
 }
 ```
 
-Example files are provided:
-- `config.example.json`
-- `.env.example`
-
-Edit `config.json`:
-
-```json
-{
-  "bots": [
-    {
-      "id": "b1",
-      "alias": "bot1",
-      "display": "Vault Bot 1",
-      "token": "123456:ABC-REPLACE"
-    }
-  ],
-  "channels": [
-    {
-      "id": "-100REPLACE",
-      "alias": "drive1",
-      "display": "Vault Channel 1"
-    }
-  ],
-  "chunkSizeBytes": 16777216,
-  "concurrency": 4,
-  "rate": {
-    "perBotChatPerMinute": 18,
-    "globalPerSecond": 25
-  },
-  "dbPath": "./data/drive.db",
-  "workDir": "./.chunks"
-}
-```
-
+You only need to edit `.env`. Changing `config.json` is only needed if you want different folder settings, chunk size, concurrency, or database paths.
 ### 3. Set the encryption key
 ```powershell
 $env:DRIVE_KEY = "your-strong-passphrase"
