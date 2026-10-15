@@ -58,7 +58,7 @@ async function main() {
       console.log('Folder cleanup skipped:', e.message);
     }
 
-    console.log('\\nSmoke test passed.');
+    console.log('\nSmoke test passed.');
   } finally {
     drive.close();
     try { fs.unlinkSync(originalFile); } catch (e) {}

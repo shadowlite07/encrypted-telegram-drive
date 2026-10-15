@@ -35,6 +35,7 @@ function openDb(dbPath) {
       iterations INTEGER NOT NULL DEFAULT 310000,
       created_at TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'uploading',
+      folder_id TEXT,
       manifest_channel_id TEXT,
       manifest_message_id TEXT,
       manifest_telegram_file_id TEXT
