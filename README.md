@@ -1,4 +1,4 @@
-# use-telegram-as-drive
+# encrypted-telegram-drive
 
 A Node.js tool that uses Telegram private channels as encrypted file storage, with Telegram bots acting as parallel workers.
 
