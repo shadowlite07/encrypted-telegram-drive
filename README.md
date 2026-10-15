@@ -47,8 +47,9 @@ npm install github:shadowlite07/encrypted-telegram-drive
 ```
 
 ```js
-const { createDrive } = require('encrypted-telegram-drive');
+const { createDrive, loadConfig } = require('encrypted-telegram-drive');
 
+const config = loadConfig('./config.json');
 const drive = createDrive(config, process.env.DRIVE_KEY, { quiet: true });
 
 const folder = await drive.folders.create('Work');
@@ -68,8 +69,34 @@ const { createDrive } = require('./src/index.js');
 ## Programmatic API
 
 Drive setup:
+
+Create the config first (this also loads `.env` automatically):
+
+```js
+const { createDrive, loadConfig } = require('encrypted-telegram-drive');
+
+const config = loadConfig('./config.json');
+const drive = createDrive(config, process.env.DRIVE_KEY, { quiet: true });
+```
+
+You can also pass a config object directly:
+
 ```js
 const { createDrive } = require('encrypted-telegram-drive');
+
+const config = {
+  bots: [
+    { id: 'b1', alias: 'bot1', display: 'Vault Bot 1', token: process.env.BOT1_TOKEN }
+  ],
+  channels: [
+    { id: process.env.DRIVE_CHANNEL_1_ID, alias: 'drive1', display: 'Vault Channel 1' }
+  ],
+  chunkSizeBytes: 16 * 1024 * 1024,
+  concurrency: 4,
+  rate: { perBotChatPerMinute: 18, globalPerSecond: 25 },
+  dbPath: './data/drive.db',
+  workDir: './.chunks'
+};
 
 const drive = createDrive(config, process.env.DRIVE_KEY, { quiet: true });
 ```
