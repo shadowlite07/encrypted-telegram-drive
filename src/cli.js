@@ -106,20 +106,20 @@ async function main() {
       console.log('Folders:');
       const folders = dbm.listFolders(ctx.db, null);
       if (!folders.length) console.log('  (none)');
-      for (const f of folders) console.log(`  ${f.id}\\t${f.name}`);
-      console.log('\\nFiles:');
+      for (const f of folders) console.log(`  ${f.id}	${f.name}`);
+      console.log('\nFiles:');
     }
 
     let rows;
     if (values.all) rows = storage.listFilesCmd(ctx);
     else rows = dbm.listFilesInFolder(ctx.db, folderId, values.recursive).filter(f => f.status === 'ready');
 
-    console.log('ID\\tSTATUS\\tSIZE\\tCHUNKS\\tLOCS\\tCREATED\\tFOLDER\\tNAME');
+    console.log('ID	STATUS	SIZE	CHUNKS	LOCS	CREATED	FOLDER	NAME');
     for (const r of rows) {
       const chunks = dbm.listChunks(ctx.db, r.id);
       const locs = new Set(chunks.map(c => c.channel_id).filter(Boolean)).size;
       const created = (r.created_at || '').replace('T', ' ').slice(0, 19);
-      console.log(`${r.id}\\t${r.status}\\t${r.size}\\t${r.num_chunks}\\t${locs}\\t${created}\\t${r.folder_id || '(root)'}\\t${r.name}`);
+      console.log(`${r.id}	${r.status}	${r.size}	${r.num_chunks}	${locs}	${created}	${r.folder_id || '(root)'}	${r.name}`);
     }
     return;
   }
@@ -135,7 +135,7 @@ async function main() {
     const folders = dbm.listFolders(ctx.db, parentId);
     console.log(parentId ? `Subfolders of ${parentId}:` : 'Root folders:');
     if (!folders.length) { console.log('(none)'); return; }
-    for (const f of folders) console.log(`${f.id}\\t${f.name}\\tcreated=${f.created_at}`);
+    for (const f of folders) console.log(`${f.id}	${f.name}	created=${f.created_at}`);
     return;
   }
 
