@@ -16,7 +16,7 @@
     "init": "node src/cli.js init",
     "status": "node src/cli.js status",
     "check": "node --check src/cli.js && node --check src/index.js && node --check src/storage.js",
-    "pretest:smoke": "npm link",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
     "smoke-test": "node examples/smoke-test.js"
   },
   "files": [

@@ -102,9 +102,9 @@ class TelegramDrive {
       return dbm.getFile(this.db, fileId);
     },
 
-    list: (options = {}) => {
+    list: async (options = {}) => {
       const dbm = require('./db');
-      if (options.all) return storage.listFilesCmd(this.ctx);
+      if (options.all) return await storage.listFilesCmd(this.ctx);
       const folderId = normalizeFolderId(options.folderId || options.folder);
       return dbm.listFilesInFolder(this.db, folderId, Boolean(options.recursive))
         .filter((f) => f.status === 'ready');
