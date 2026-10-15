@@ -133,7 +133,9 @@ async function uploadFile(ctx, filePath) {
   const chunkResults = await Promise.all(specs.map(s =>
     scheduler.schedule({ botId: s.botCfg.id, channelId: s.channelCfg.id, priority: 1 }, s.run).then((r) => {
       completedChunks += 1;
-      printProgress('upload', completedChunks, numChunks, startTime);
+      const progress = { label: 'upload', completed: completedChunks, total: numChunks, start: startTime };
+      if (typeof ctx.onProgress === 'function') ctx.onProgress(progress);
+      else if (!ctx.quiet) printProgress(progress.label, progress.completed, progress.total, progress.start);
       return r;
     })
   ));
@@ -217,7 +219,9 @@ async function downloadFile(ctx, fileId, outPath) {
             fs.write(writeFd, plain, 0, plain.length, offset, (err) => err ? reject(err) : resolve());
           });
           completedDownloads += 1;
-          printProgress('download', completedDownloads, chunks.length, downloadStart);
+          const progress = { label: 'download', completed: completedDownloads, total: chunks.length, start: downloadStart };
+          if (typeof ctx.onProgress === 'function') ctx.onProgress(progress);
+          else if (!ctx.quiet) printProgress(progress.label, progress.completed, progress.total, progress.start);
         });
       } catch (e) {
         errors.push(e);

@@ -1,12 +1,28 @@
 {
-  "name": "use-telegram-as-drive",
-  "version": "1.0.0",
+  "name": "encrypted-telegram-drive",
+  "version": "0.1.0",
+  "description": "Use Telegram private channels as encrypted file storage with parallel bot workers.",
   "description": "",
-  "main": "src/cli.js",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": "./src/index.js",
+    "./cli": "./src/cli.js"
+  },
+  "bin": {
+    "telegram-drive": "src/cli.js"
+  },
   "scripts": {
     "init": "node src/cli.js init",
-    "status": "node src/cli.js status"
+    "status": "node src/cli.js status",
+    "check": "node --check src/cli.js && node --check src/index.js && node --check src/storage.js"
   },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
