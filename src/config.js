@@ -75,13 +75,18 @@ function writeTemplate(configPath = DEFAULT_PATH) {
   fs.writeFileSync(configPath, JSON.stringify(template, null, 2));
 
   const envExample = path.join(path.dirname(configPath), '.env.example');
-  fs.writeFileSync(envExample, [
-    '# Telegram drive secrets',
+  const envContent = [
+    '# Private Telegram drive variables',
+    '# Copy this file to .env and fill in real values.',
     'BOT1_TOKEN=123456:ABC-REPLACE',
     'DRIVE_CHANNEL_ID=-100REPLACE',
     'DRIVE_KEY=replace-with-a-long-base64-key',
     ''
-  ].join('\\n'));
+  ].join('\\n');
+  fs.writeFileSync(envExample, envContent);
+
+  const envPath = path.join(path.dirname(configPath), '.env');
+  if (!fs.existsSync(envPath)) fs.writeFileSync(envPath, envContent);
 
   const configExample = path.join(path.dirname(configPath), 'config.example.json');
   const envTemplate = {
