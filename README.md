@@ -115,6 +115,21 @@ node src/cli.js doctor
 node src/cli.js upload .\file.bin
 node src/cli.js upload .\file.bin --fresh
 node src/cli.js upload .\file.bin --cleanup-on-fail
+node src/cli.js upload .\file.bin --folder <folderId>
+```
+
+### Folders
+```powershell
+node src/cli.js folders
+node src/cli.js folders <folderId>
+node src/cli.js folder create <name>
+node src/cli.js folder create <name> --parent <folderId>
+node src/cli.js folder rename <folderId> <newName>
+node src/cli.js folder delete <folderId>
+node src/cli.js list
+node src/cli.js list --folder <folderId>
+node src/cli.js list --all
+node src/cli.js move <fileId> <folderId|root|null>
 ```
 
 ### List

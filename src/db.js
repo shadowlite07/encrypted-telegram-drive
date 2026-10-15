@@ -7,7 +7,15 @@ function openDb(dbPath) {
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
   try { db.prepare('ALTER TABLE files ADD COLUMN manifest_telegram_file_id TEXT').run(); } catch (e) {}
+  try { db.prepare('ALTER TABLE files ADD COLUMN folder_id TEXT').run(); } catch (e) {}
   db.exec(`
+    CREATE TABLE IF NOT EXISTS folders (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      parent_id TEXT,
+      created_at TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active'
+    );
     CREATE TABLE IF NOT EXISTS meta (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
@@ -86,4 +94,77 @@ function deleteFileRows(db, fileId) {
   db.prepare('DELETE FROM files WHERE id=?').run(fileId);
 }
 
-module.exports = { openDb, getMeta, setMeta, upsertFile, getFile, listFiles, upsertChunk, getChunk, listChunks, deleteFileRows };
+function createFolder(db, folder) {
+  db.prepare(`
+    INSERT INTO folders (id, name, parent_id, created_at, status)
+    VALUES (@id, @name, @parent_id, @created_at, @status)
+  `).run(folder);
+  return folder;
+}
+
+function getFolder(db, id) {
+  return db.prepare('SELECT * FROM folders WHERE id=? AND status != ?').get(id, 'deleted');
+}
+
+function listFolders(db, parentId = null) {
+  if (parentId === null || parentId === undefined) {
+    return db.prepare('SELECT * FROM folders WHERE parent_id IS NULL AND status != ? ORDER BY name ASC').all('deleted');
+  }
+  return db.prepare('SELECT * FROM folders WHERE parent_id = ? AND status != ? ORDER BY name ASC').all(parentId, 'deleted');
+}
+
+function renameFolder(db, id, name) {
+  db.prepare('UPDATE folders SET name=? WHERE id=?').run(name, id);
+}
+
+function deleteFolder(db, id) {
+  const subFolders = listFolders(db, id).length;
+  const files = listFilesInFolder(db, id).length;
+  if (subFolders > 0 || files > 0) {
+    throw new Error(`Folder is not empty (${subFolders} subfolders, ${files} files)`);
+  }
+  db.prepare("UPDATE folders SET status='deleted' WHERE id=?").run(id);
+}
+
+function listAllFolders(db) {
+  return db.prepare("SELECT * FROM folders WHERE status != 'deleted'").all();
+}
+
+function upsertFolder(db, folder) {
+  db.prepare(`
+    INSERT INTO folders (id, name, parent_id, created_at, status)
+    VALUES (@id, @name, @parent_id, @created_at, @status)
+    ON CONFLICT(id) DO UPDATE SET
+      name=excluded.name, parent_id=excluded.parent_id, created_at=excluded.created_at, status=excluded.status
+  `).run(folder);
+}
+
+function moveFileToFolder(db, fileId, folderId) {
+  db.prepare('UPDATE files SET folder_id=? WHERE id=?').run(folderId || null, fileId);
+}
+
+function listFilesInFolder(db, folderId, recursive = false) {
+  if (!recursive) {
+    if (folderId === null || folderId === undefined || folderId === '/') {
+      return db.prepare("SELECT * FROM files WHERE (folder_id IS NULL OR folder_id = '' OR folder_id = '/') AND status != 'deleted' ORDER BY name ASC").all();
+    }
+    return db.prepare("SELECT * FROM files WHERE folder_id = ? AND status != 'deleted' ORDER BY name ASC").all(folderId);
+  }
+  // recursive: collect folder ids then files
+  const ids = new Set([folderId]);
+  const stack = [folderId];
+  while (stack.length) {
+    const current = stack.pop();
+    for (const f of listFolders(db, current === '/' ? null : current)) {
+      ids.add(f.id);
+      stack.push(f.id);
+    }
+  }
+  const placeholders = [...ids].map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM files WHERE folder_id IN (${placeholders}) AND status != 'deleted' ORDER BY name ASC`).all(...ids);
+}
+
+module.exports = {
+  openDb, getMeta, setMeta, upsertFile, getFile, listFiles, listFilesInFolder, upsertChunk, getChunk, listChunks, deleteFileRows,
+  createFolder, getFolder, listFolders, listAllFolders, renameFolder, deleteFolder, moveFileToFolder, upsertFolder
+};

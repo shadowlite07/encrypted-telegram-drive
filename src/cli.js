@@ -57,7 +57,8 @@ async function main() {
         config: { type: 'string', default: 'config.json' },
         verify: { type: 'boolean', default: false },
         fresh: { type: 'boolean', default: false },
-        cleanupOnFail: { type: 'boolean', default: false }
+        cleanupOnFail: { type: 'boolean', default: false },
+        folder: { type: 'string' }
       },
       allowPositionals: true
     });
@@ -66,6 +67,7 @@ async function main() {
     const ctx = makeCtx(values.config);
     ctx.fresh = values.fresh;
     ctx.cleanupOnFail = values.cleanupOnFail;
+    ctx.folderId = values.folder || null;
     const res = await storage.uploadFile(ctx, path.resolve(file));
     print(res);
     return;
@@ -88,19 +90,122 @@ async function main() {
 
   if (cmd === 'list') {
     const { values } = parseArgs({
-      options: { config: { type: 'string', default: 'config.json' } },
+      options: {
+        config: { type: 'string', default: 'config.json' },
+        folder: { type: 'string' },
+        all: { type: 'boolean', default: false },
+        recursive: { type: 'boolean', default: false }
+      },
       allowPositionals: true
     });
     const ctx = makeCtx(values.config);
     const dbm = require('./db');
-    const rows = await storage.listFilesCmd(ctx);
-    console.log('ID\tSTATUS\tSIZE\tCHUNKS\tLOCS\tCREATED\tNAME');
+    const folderId = (values.folder === 'root' || values.folder === '/') ? null : (values.folder || null);
+
+    if (!values.all && folderId === null && !values.recursive) {
+      console.log('Folders:');
+      const folders = dbm.listFolders(ctx.db, null);
+      if (!folders.length) console.log('  (none)');
+      for (const f of folders) console.log(`  ${f.id}\\t${f.name}`);
+      console.log('\\nFiles:');
+    }
+
+    let rows;
+    if (values.all) rows = storage.listFilesCmd(ctx);
+    else rows = dbm.listFilesInFolder(ctx.db, folderId, values.recursive).filter(f => f.status === 'ready');
+
+    console.log('ID\\tSTATUS\\tSIZE\\tCHUNKS\\tLOCS\\tCREATED\\tFOLDER\\tNAME');
     for (const r of rows) {
       const chunks = dbm.listChunks(ctx.db, r.id);
       const locs = new Set(chunks.map(c => c.channel_id).filter(Boolean)).size;
       const created = (r.created_at || '').replace('T', ' ').slice(0, 19);
-      console.log(`${r.id}\t${r.status}\t${r.size}\t${r.num_chunks}\t${locs}\t${created}\t${r.name}`);
+      console.log(`${r.id}\\t${r.status}\\t${r.size}\\t${r.num_chunks}\\t${locs}\\t${created}\\t${r.folder_id || '(root)'}\\t${r.name}`);
     }
+    return;
+  }
+
+  if (cmd === 'folders') {
+    const { values, positionals } = parseArgs({
+      options: { config: { type: 'string', default: 'config.json' } },
+      allowPositionals: true
+    });
+    const ctx = makeCtx(values.config);
+    const parentId = (positionals[1] === 'root' || !positionals[1]) ? null : positionals[1];
+    const dbm = require('./db');
+    const folders = dbm.listFolders(ctx.db, parentId);
+    console.log(parentId ? `Subfolders of ${parentId}:` : 'Root folders:');
+    if (!folders.length) { console.log('(none)'); return; }
+    for (const f of folders) console.log(`${f.id}\\t${f.name}\\tcreated=${f.created_at}`);
+    return;
+  }
+
+  if (cmd === 'folder') {
+    const sub = process.argv[3];
+    const { values, positionals } = parseArgs({
+      options: {
+        config: { type: 'string', default: 'config.json' },
+        parent: { type: 'string' }
+      },
+      allowPositionals: true
+    });
+    const ctx = makeCtx(values.config);
+    const dbm = require('./db');
+
+    if (sub === 'create') {
+      const name = positionals[2] || positionals[1];
+      if (!name) { console.error('Usage: folder create <name> [--parent <id>]'); process.exit(1); }
+      // parent may be passed via --parent
+      const parent = values.parent || null;
+      const id = require('node:crypto').randomUUID();
+      dbm.createFolder(ctx.db, {
+        id,
+        name,
+        parent_id: parent === 'root' ? null : parent,
+        created_at: new Date().toISOString(),
+        status: 'active'
+      });
+      console.log('created folder:', id, name);
+      return;
+    }
+
+    if (sub === 'rename') {
+      const id = positionals[2] || positionals[1];
+      const name = positionals[3] || positionals[2];
+      if (!id || !name) { console.error('Usage: folder rename <id> <name>'); process.exit(1); }
+      dbm.renameFolder(ctx.db, id, name);
+      console.log('renamed folder:', id);
+      return;
+    }
+
+    if (sub === 'delete') {
+      const id = positionals[2] || positionals[1];
+      if (!id) { console.error('Usage: folder delete <id>'); process.exit(1); }
+      dbm.deleteFolder(ctx.db, id);
+      console.log('deleted folder:', id);
+      return;
+    }
+
+    console.error('Usage: folder <create|rename|delete> ...');
+    process.exit(1);
+  }
+
+  if (cmd === 'move') {
+    const { values, positionals } = parseArgs({
+      options: { config: { type: 'string', default: 'config.json' } },
+      allowPositionals: true
+    });
+    const id = positionals[1];
+    const folder = positionals[2];
+    if (!id || folder === undefined) { console.error('Usage: move <fileId> <folderId|root|null>'); process.exit(1); }
+    const ctx = makeCtx(values.config);
+    const dbm = require('./db');
+    const target = (folder === 'root' || folder === 'null' || folder === 'none') ? null : folder;
+    if (target) {
+      const f = dbm.getFolder(ctx.db, target);
+      if (!f) { console.error('Target folder not found:', target); process.exit(1); }
+    }
+    dbm.moveFileToFolder(ctx.db, id, target);
+    console.log(`moved ${id} -> ${target || '(root)'}`);
     return;
   }
 

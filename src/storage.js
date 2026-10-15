@@ -46,7 +46,12 @@ async function uploadFile(ctx, filePath) {
   const name = path.basename(filePath);
   const mime = 'application/octet-stream';
   const fileSha = await cryptoMod.sha256File(filePath);
-  let cand = dbm.listFiles(db).find(f => f.source_path === filePath && f.status !== 'ready' && f.size === fsStat.size);
+  let cand = dbm.listFiles(db).find(f =>
+    f.source_path === filePath &&
+    f.status !== 'ready' &&
+    f.size === fsStat.size &&
+    (f.folder_id || null) === (ctx.folderId || null)
+  );
   if (ctx.fresh && cand) {
     try { await deleteFileCmd(ctx, cand.id); } catch (e) {}
     cand = null;
@@ -71,6 +76,7 @@ async function uploadFile(ctx, filePath) {
     iterations: 310000,
     created_at: cand && cand.created_at ? cand.created_at : new Date().toISOString(),
     status: 'uploading',
+    folder_id: ctx.folderId || null,
     manifest_channel_id: null,
     manifest_message_id: null,
     manifest_telegram_file_id: null
@@ -317,6 +323,7 @@ async function exportBundle(ctx, outPath) {
   const data = {
     version: 1,
     exportedAt: new Date().toISOString(),
+    folders: dbm.listAllFolders(ctx.db),
     files: files.map((f) => ({
       ...f,
       chunks: dbm.listChunks(ctx.db, f.id)
@@ -338,6 +345,9 @@ async function importBundle(ctx, inPath) {
   const key = await cryptoMod.deriveKey(ctx.password, salt, 310000, 32);
   const data = cryptoMod.decryptJson(key, packed);
   if (!data || !Array.isArray(data.files)) throw new Error('Invalid bundle');
+  if (Array.isArray(data.folders)) {
+    for (const folder of data.folders) dbm.upsertFolder(ctx.db, folder);
+  }
   for (const f of data.files) {
     dbm.upsertFile(ctx.db, f);
     if (Array.isArray(f.chunks)) {
