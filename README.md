@@ -105,12 +105,14 @@ $env:DRIVE_KEY
 
 ## Commands
 
-### Validate setup
+### doctor
+Validate `DRIVE_KEY`, config, bot tokens, channel access, admin status, and the local database.
 ```powershell
 node src/cli.js doctor
 ```
 
-### Upload
+### upload `<file>` [--fresh] [--cleanup-on-fail] [--folder <folderId>]
+Split the file into encrypted chunks and upload them to Telegram.
 ```powershell
 node src/cli.js upload .\file.bin
 node src/cli.js upload .\file.bin --fresh
@@ -118,60 +120,102 @@ node src/cli.js upload .\file.bin --cleanup-on-fail
 node src/cli.js upload .\file.bin --folder <folderId>
 ```
 
-### Folders
+### folder create `<name>` [--parent <folderId>]
+Create an empty folder for organizing files.
+```powershell
+node src/cli.js folder create Work
+node src/cli.js folder create Invoices --parent <folderId>
+```
+
+### folder rename `<folderId>` `<newName>`
+Rename an existing folder.
+```powershell
+node src/cli.js folder rename <folderId> "New Name"
+```
+
+### folder delete `<folderId>`
+Delete an empty folder.
+```powershell
+node src/cli.js folder delete <folderId>
+```
+
+### folders [parent]
+List folders in the root or under another folder.
 ```powershell
 node src/cli.js folders
 node src/cli.js folders <folderId>
-node src/cli.js folder create <name>
-node src/cli.js folder create <name> --parent <folderId>
-node src/cli.js folder rename <folderId> <newName>
-node src/cli.js folder delete <folderId>
+```
+
+### move `<fileId>` `<folderId|root|null>`
+Move a stored file into a folder, back to root, or remove its folder assignment.
+```powershell
+node src/cli.js move <fileId> <folderId>
+node src/cli.js move <fileId> root
+```
+
+### list [--folder <id>] [--all] [--recursive]
+List folders and files. Defaults to the root folder.
+```powershell
 node src/cli.js list
 node src/cli.js list --folder <folderId>
 node src/cli.js list --all
-node src/cli.js move <fileId> <folderId|root|null>
 ```
 
-### List
-```powershell
-node src/cli.js list
-```
-
-### Download
+### download `<fileId>` [outPath]
+Download and reassemble a stored file. If `outPath` is omitted, saves to your Downloads folder.
 ```powershell
 node src/cli.js download <fileId>
-node src/cli.js download <fileId> .\custom-output.bin
+node src/cli.js download <fileId> .\restored.bin
 ```
 
-If no output path is given, the file is saved to your Downloads folder.
-
-### Verify
+### verify `<fileId>`
+Download chunks to a temporary file, verify all hashes, then delete the temporary file.
 ```powershell
 node src/cli.js verify <fileId>
 ```
 
-### Delete
+### delete `<fileId>`
+Delete a stored file and its Telegram chunks.
 ```powershell
 node src/cli.js delete <fileId>
 ```
 
-### Cleanup failed uploads
+### cleanup
+Delete all failed or incomplete uploads and their chunks.
 ```powershell
 node src/cli.js cleanup
 ```
 
-### Backup database
+### backup [destination]
+Create a safe SQLite backup of the metadata database.
 ```powershell
 node src/cli.js backup
 node src/cli.js backup .\backups\drive.db.copy
 ```
 
-### Export/import metadata bundle
+### export --out `<file>`
+Create an encrypted metadata bundle for transfer or recovery.
 ```powershell
 node src/cli.js export --out .\drive-bundle.enc
+```
+
+### import --in `<file>`
+Restore metadata from an encrypted bundle.
+```powershell
 node src/cli.js import --in .\drive-bundle.enc
 ```
 
+### portable [directory]
+Create a transferable folder containing config, database, bundle, and restore notes.
+```powershell
+node src/cli.js portable .\telestore-portable
+```
+
+### discover
+Poll Telegram updates to help find channel IDs.
+```powershell
+node src/cli.js discover --bot b1 --seconds 20
+```
 ## Storage rules
 - Bot API file downloads are limited to about 20 MB.
 - The default chunk size is 16 MB.
