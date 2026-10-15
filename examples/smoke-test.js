@@ -1,6 +1,12 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { createDrive } = require('../src/index.js');
+let createDrive;
+try {
+  ({ createDrive } = require('encrypted-telegram-drive'));
+} catch (error) {
+  console.warn('Package is not linked; falling back to local source. Run "npm link" first to test package resolution.');
+  ({ createDrive } = require('../src/index.js'));
+}
 
 async function main() {
   const configFile = process.env.CONFIG_PATH || './config.json';
