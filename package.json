@@ -1,0 +1,17 @@
+{
+  "name": "use-telegram-as-drive",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/cli.js",
+  "scripts": {
+    "init": "node src/cli.js init",
+    "status": "node src/cli.js status"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3"
+  }
+}

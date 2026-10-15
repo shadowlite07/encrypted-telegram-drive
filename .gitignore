@@ -1,0 +1,9 @@
+config.json
+data/
+.chunks/
+.env
+backups/
+node_modules/
+*.bak
+scratchpad-*
+test-mock-telegram.js
